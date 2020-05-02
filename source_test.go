@@ -15,5 +15,5 @@ func TestNewSource(t *testing.T) {
 	src, err := NewSource(testFile)
 	assert.NoError(t, err)
 
-	fmt.Printf("%#v\n\n", src.src)
+	fmt.Printf("%#v\n\n", src.vipsObj)
 }

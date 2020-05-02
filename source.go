@@ -1,60 +1,60 @@
 package thumbnailer
 
 /*
-#include <vips.h>
-#include "source.h"
+#include "vips.h"
+
+VipsSourceGo * vips_source_go_new ( int id )
+{
+	VipsSourceGo *source_go;
+
+	VIPS_DEBUG_MSG( "vips_source_go_new:\n" );
+
+	source_go = VIPS_SOURCE_GO( g_object_new( VIPS_TYPE_SOURCE_GO, NULL ) );
+	source_go->id = id;
+
+	if( vips_object_build( VIPS_OBJECT( source_go ) ) ) {
+		VIPS_UNREF( source_go );
+		return( NULL );
+	}
+
+	return( source_go );
+}
 */
 import "C"
 import (
 	"io"
-	"reflect"
-	"sync/atomic"
-	"unsafe"
+	"sync"
 )
 
 var (
-	imageID = int32(0)
+	sourceCtr int
+	sources   = make(map[int]*Source)
+	sourceMu  = sync.RWMutex{}
 )
 
 type Source struct {
-	id  int32
-	rdr io.ReadSeeker
-	src *C.struct__VipsSourceCustom
+	reader  io.Reader
+	seeker  io.Seeker
+	vipsObj *C.struct__VipsSourceGo
 }
 
-func NewSource(image io.ReadSeeker) (*Source, error) {
-	vipsSrc := C.vips_source_custom_new()
-
-	id := atomic.AddInt32(&imageID, 1)
-
+func NewSource(image io.Reader) (*Source, error) {
 	src := &Source{
-		id:  id,
-		rdr: image,
-		src: vipsSrc,
+		reader: image,
 	}
+
+	skr, ok := image.(io.ReadSeeker)
+	if ok {
+		src.seeker = skr
+	}
+
+	sourceMu.Lock()
+	sourceCtr++
+	id := sourceCtr
+	sources[id] = src
+	sourceMu.Unlock()
+
+	src.vipsObj = C.vips_source_go_new(C.int(id))
 
 	return src, nil
-}
-
-// TODO: Figure out how to pass and return int64 :')
-//export GoSourceRead
-func GoSourceRead(buffer unsafe.Pointer, bufSize C.int) (read C.int) {
-	// https://stackoverflow.com/questions/51187973/how-to-create-an-array-or-a-slice-from-an-array-unsafe-pointer-in-golang
-	sh := &reflect.SliceHeader{
-		Data: uintptr(buffer),
-		Len:  int(bufSize),
-		Cap:  int(bufSize),
-	}
-
-	buf := *(*[]byte)(unsafe.Pointer(sh))
-
-	_ = buf[0] // Do rdr.Read()
-
-	return 0
-}
-
-// TODO: Figure out how to return int64 :')
-//export GoSourceSeek
-func GoSourceSeek(offset int, whence int) (newOffset C.int) {
-	return 0
 }

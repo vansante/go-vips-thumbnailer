@@ -2,7 +2,7 @@ package thumbnailer
 
 /*
 #cgo pkg-config: vips
-#include "source.h"
+#include <vips/vips.h>
 */
 import "C"
 
