@@ -2,17 +2,11 @@ package thumbnailer
 
 /*
 #include <vips.h>
-#include "source.c"
+#include "source.h"
 */
 import "C"
 import (
-	"fmt"
 	"io"
-)
-
-var (
-	signalRead = C.CString("read")
-	signalSeek = C.CString("seek")
 )
 
 type Source struct {
@@ -27,12 +21,6 @@ func NewSource(image io.ReadSeeker) (*Source, error) {
 		rdr: image,
 		src: vipsSrc,
 	}
-
-	gobj := vipsSrc.parent_object.parent_object.parent_object.parent_instance
-
-	fmt.Printf("%#v\n\n", gobj)
-
-	C.g_signal_connect_closure(vipsSrc, signalRead, nil, 0)
 
 	return src, nil
 }
