@@ -22,7 +22,7 @@
 #include <vips/vips.h>
 #include <vips/debug.h>
 
-#define VIPS_TYPE_SOURCE_GO (vips_source_go_get_type())
+#define VIPS_TYPE_SOURCE_GO (vips_source_get_type())
 #define VIPS_SOURCE_GO( obj ) \
 	(G_TYPE_CHECK_INSTANCE_CAST( (obj), \
 	VIPS_TYPE_SOURCE_GO, VipsSourceGo ))
@@ -52,23 +52,21 @@ typedef struct _VipsSourceGoClass {
 	gint64 (*read)( VipsSourceGo *, void *, gint64 );
 	gint64 (*seek)( VipsSourceGo *, gint64, int );
 
+    gint64 pointer;
+
 } VipsSourceGoClass;
 
 
 static gint64
-vips_source_go_read_real ( VipsSource *source, void *data, size_t length )
+vips_source_go_read_real ( VipsSourceGo *source, void *buffer, gint64 length )
 {
-	VIPS_DEBUG_MSG( "vips_source_go_read:\n" );
-
-    	return( 0 );
+    return GoSourceRead(buffer, length);
 }
 
 static gint64
-vips_source_go_seek_real ( VipsSource *source, gint64 offset, int whence )
+vips_source_go_seek_real ( VipsSourceGo *source, gint64 offset, int whence )
 {
-	VIPS_DEBUG_MSG( "vips_source_go_seek:\n" );
-
-	return( -1 );
+	return GoSourceSeek(offset, whence);
 }
 
 static void
@@ -80,8 +78,8 @@ vips_source_go_class_init( VipsSourceGoClass *class )
 	object_class->nickname = "go source";
 	object_class->description = _( "Go source" );
 
-	source_class->read = vips_source_go_read_real;
-	source_class->seek = vips_source_go_seek_real;
+	class->read = vips_source_go_read_real;
+    class->seek = vips_source_go_seek_real;
 }
 
 static void
@@ -91,5 +89,22 @@ vips_source_go_init( VipsSourceGo *source_custom )
 
 // WHY DO YOU ERROR
 //G_DEFINE_TYPE( VipsSourceGo, vips_source_go, VIPS_TYPE_SOURCE );
+
+//
+//VipsSourceGo * vips_source_go_new ( void* pointer )
+//{
+//	VipsSourceGo *source_go;
+//
+//	VIPS_DEBUG_MSG( "vips_source_go_new:\n" );
+//
+//	source_go = VIPS_SOURCE_GO( g_object_new( VIPS_TYPE_SOURCE_GO, NULL ) );
+//
+//	if( vips_object_build( VIPS_OBJECT( source_go ) ) ) {
+//		VIPS_UNREF( source_go );
+//		return( NULL );
+//	}
+//
+//	return( source_go );
+//}
 
 #endif // HAVE_GO_SOURCE_H
