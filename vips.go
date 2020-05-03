@@ -6,14 +6,14 @@ package thumbnailer
 
 int vips_thumbnail_bridge(VipsSourceCustom *source, VipsImage **out, int width, int height, int no_rotate, int crop) {
 	if (crop) {
-		return vips_thumbnail_source(source, out, width,
+		return vips_thumbnail_source( (VipsSource*) source, out, width,
 			"height", height,
 			"no_rotate", INT_TO_GBOOLEAN(no_rotate),
 			"crop", VIPS_INTERESTING_CENTRE,
 			NULL
 		);
 	}
-	return vips_thumbnail_source(source, out, width,
+	return vips_thumbnail_source( (VipsSource*) source, out, width,
 		"height", height,
 		"no_rotate", INT_TO_GBOOLEAN(no_rotate),
 		NULL
@@ -21,7 +21,7 @@ int vips_thumbnail_bridge(VipsSourceCustom *source, VipsImage **out, int width, 
 }
 
 int vips_jpegsave_bridge(VipsImage *in, VipsTargetCustom *target, int strip, int quality, int interlace) {
-	return vips_jpegsave_target(in, target,
+	return vips_jpegsave_target(in, (VipsTarget*) target,
 		"strip", INT_TO_GBOOLEAN(strip),
 		"Q", quality,
 		"optimize_coding", TRUE,
