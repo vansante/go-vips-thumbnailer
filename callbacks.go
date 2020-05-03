@@ -9,8 +9,7 @@ import (
 )
 
 //export goSourceRead
-// TODO: Figure out how to pass and return int64 :')
-func goSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int) {
+func goSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.longlong) (read C.longlong) {
 	sourceMu.RLock()
 	src, ok := sources[imageID]
 	sourceMu.RUnlock()
@@ -30,19 +29,18 @@ func goSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int
 	n, err := src.reader.Read(buf)
 	if errors.Is(err, io.EOF) {
 		logger.Debugf("goSourceRead[id %d] EOF [read %d]", imageID, n)
-		return C.int(n)
+		return C.longlong(n)
 	} else if err != nil {
 		logger.Errorf("goSourceRead[id %d]: Error: %v [read %d]", imageID, err, n)
 		return -1
 	}
 
 	logger.Debugf("goSourceRead[id %d]: OK [read %d]", imageID, n)
-	return C.int(n)
+	return C.longlong(n)
 }
 
 //export goSourceSeek
-// TODO: Figure out how to return int64 :')
-func goSourceSeek(imageID int, offset int, whence int) (newOffset C.int) {
+func goSourceSeek(imageID int, offset C.longlong, whence int) (newOffset C.longlong) {
 	sourceMu.RLock()
 	src, ok := sources[imageID]
 	sourceMu.RUnlock()
@@ -72,12 +70,11 @@ func goSourceSeek(imageID int, offset int, whence int) (newOffset C.int) {
 
 	logger.Debugf("goSourceSeek[id %d]: OK [seek %d | whence %d]", imageID, n, whence)
 
-	return C.int(n)
+	return C.longlong(n)
 }
 
 //export goTargetWrite
-// TODO: Figure out how to return int64 :')
-func goTargetWrite(imageID int, buffer unsafe.Pointer, bufSize C.int) (written C.int) {
+func goTargetWrite(imageID int, buffer unsafe.Pointer, bufSize C.longlong) (written C.longlong) {
 	targetMu.RLock()
 	target, ok := targets[imageID]
 	targetMu.RUnlock()
@@ -97,11 +94,14 @@ func goTargetWrite(imageID int, buffer unsafe.Pointer, bufSize C.int) (written C
 	n, err := target.writer.Write(buf)
 	if err != nil {
 		logger.Errorf("goTargetWrite[id %d]: Error: %v [wrote %d]", imageID, err, n)
-		return C.int(n)
+		if n == 0 {
+			return -1 // Return an error
+		}
+		return C.longlong(n) // We wrote something, so we should report how much we wrote
 	}
 
 	logger.Debugf("goTargetWrite[id %d]: OK [wrote %d]", imageID, n)
-	return C.int(n)
+	return C.longlong(n)
 }
 
 //export goTargetFinish
