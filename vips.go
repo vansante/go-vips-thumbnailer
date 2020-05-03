@@ -20,7 +20,7 @@ int vips_thumbnail_bridge(VipsSourceCustom *source, VipsImage **out, int width, 
 	);
 }
 
-// TODO: Change to a VipsTargetGo later on
+// TODO: Change to a VipsTargetCustom later on
 int vips_jpegsave_bridge(VipsImage *in, void **buf, size_t *len, int strip, int quality, int interlace) {
 	return vips_jpegsave_buffer(in, buf, len,
 		"strip", INT_TO_GBOOLEAN(strip),

@@ -9,11 +9,12 @@ import (
 )
 
 func TestNewSource(t *testing.T) {
-	testFile, err := os.Open("assets/test.jpg")
+	testFile, err := os.Open("assets/test2.jpg")
 	assert.NoError(t, err)
 
 	src, err := NewSource(testFile)
 	assert.NoError(t, err)
+	//src.seeker = nil
 	defer src.Cleanup()
 
 	data, err := src.Thumbnail()
