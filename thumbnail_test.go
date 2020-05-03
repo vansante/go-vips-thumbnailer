@@ -17,7 +17,7 @@ func TestNewSource(t *testing.T) {
 	src := NewSource(testFile)
 	defer src.free()
 
-	outFile, err := os.Create("assets/output.jpg")
+	outFile, err := os.Create("test_out/output.jpg")
 	assert.NoError(t, err)
 	defer outFile.Close()
 
