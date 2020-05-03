@@ -4,9 +4,7 @@ package thumbnailer
 #cgo pkg-config: vips
 #include "vips.h"
 
-int vips_thumbnail_bridge(VipsSourceGo *source, VipsImage **out, int width, int height, int no_rotate, int crop) {
-	printf( "BRIDGE:\n" );
-    fflush(stdout);
+int vips_thumbnail_bridge(VipsSourceCustom *source, VipsImage **out, int width, int height, int no_rotate, int crop) {
 	if (crop) {
 		return vips_thumbnail_source(source, out, width,
 			"height", height,
@@ -103,7 +101,7 @@ func vipsThumbnail(imageSource *Source, width, height int, autoRotate, crop bool
 	noRotate := C.int(boolToInt(!autoRotate))
 	cropParam := C.int(boolToInt(crop))
 
-	err := C.vips_thumbnail_bridge(imageSource.vipsObj, &image,
+	err := C.vips_thumbnail_bridge(imageSource.src, &image,
 		C.int(width), C.int(height), noRotate, cropParam,
 	)
 	if int(err) != 0 {

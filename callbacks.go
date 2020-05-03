@@ -57,7 +57,7 @@ func GoSourceSeek(imageID int, offset int, whence int) (newOffset C.int) {
 		return -1
 	}
 
-	fmt.Printf("GoSourceSeek: OK [read %d]\n", n)
+	fmt.Printf("GoSourceSeek: OK [seek %d]\n", n)
 
 	return C.int(n)
 }

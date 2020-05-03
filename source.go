@@ -1,114 +1,42 @@
 package thumbnailer
 
 /*
-#include "vips.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <vips/vips.h>
-#include <vips/debug.h>
 
-#define VIPS_TYPE_SOURCE_GO (vips_source_get_type())
-#define VIPS_SOURCE_GO( obj ) \
-(G_TYPE_CHECK_INSTANCE_CAST( (obj), \
-VIPS_TYPE_SOURCE_GO, VipsSourceGo ))
-#define VIPS_SOURCE_GO_CLASS( klass ) \
-(G_TYPE_CHECK_CLASS_CAST( (klass), \
-VIPS_TYPE_SOURCE_GO, VipsSourceGoClass))
-#define VIPS_IS_SOURCE_GO( obj ) \
-(G_TYPE_CHECK_INSTANCE_TYPE( (obj), VIPS_TYPE_SOURCE_GO ))
-#define VIPS_IS_SOURCE_GO_CLASS( klass ) \
-(G_TYPE_CHECK_CLASS_TYPE( (klass), VIPS_TYPE_SOURCE_GO ))
-#define VIPS_SOURCE_GO_GET_CLASS( obj ) \
-(G_TYPE_INSTANCE_GET_CLASS( (obj), \
-VIPS_TYPE_SOURCE_GO, VipsSourceGoClass ))
+typedef struct _GoSourceArguments {
+	int image_id;
+} GoSourceArguments;
 
-static gint64
-vips_source_go_read_real ( VipsSource *source, void *buffer, size_t length )
+GoSourceArguments * create_go_source_arguments( int image_id )
 {
-    printf( "GO TEST READ :\n" );
-    fflush(stdout);
-    return 0;
-//    return GoSourceRead(1, buffer, length);
+	GoSourceArguments * source_args;
+	source_args = malloc(sizeof(GoSourceArguments));
+	source_args->image_id = image_id;
+
+	return source_args;
 }
 
 static gint64
-vips_source_go_seek_real ( VipsSource *source, gint64 offset, int whence )
+go_read ( VipsSourceCustom *source_custom, void *buffer, gint64 length, GoSourceArguments * source_args )
 {
-    printf( "GO TEST SEEK :\n" );
-    fflush(stdout);
-    return 0;
+    return GoSourceRead(source_args->image_id, buffer, length);
 }
 
 static gint64
-vips_source_go_read_go ( VipsSourceGo *source, void *buffer, gint64 length )
+go_seek ( VipsSourceCustom *source_custom, gint64 offset, int whence, GoSourceArguments * source_args )
 {
-    printf( "GO TEST READ 2:\n" );
-    fflush(stdout);
-    return 0;
-//    return GoSourceRead(source->id, buffer, length);
+	return GoSourceSeek(source_args->image_id, offset, whence);
 }
 
-static gint64
-vips_source_go_seek_go ( VipsSourceGo *source, gint64 offset, int whence )
+VipsSourceCustom *
+create_go_custom_source( GoSourceArguments * source_args )
 {
-    printf( "GO TEST SEEK 2:\n" );
-    fflush(stdout);
-    return 0;
-//	return GoSourceSeek(source->id, offset, whence);
-}
+	VipsSourceCustom * source_custom = vips_source_custom_new();
 
-static void
-vips_source_go_class_init ( VipsSourceGoClass *class )
-{
-    printf( "GO CLASSSS :\n" );
-    fflush(stdout);
+	g_signal_connect( source_custom, "read", G_CALLBACK(go_read), source_args );
+	g_signal_connect( source_custom, "seek", G_CALLBACK(go_seek), source_args );
 
-	VipsObjectClass *object_class = VIPS_OBJECT_CLASS( class );
-	VipsSourceClass *source_class = VIPS_SOURCE_CLASS( class );
-
-	object_class->nickname = "go source";
-	object_class->description = "Go source";
-
-	class->read = vips_source_go_read_go;
-    class->seek = vips_source_go_seek_go;
-
-    source_class->read = vips_source_go_read_real;
-    source_class->seek = vips_source_go_seek_real;
-}
-
-static void
-vips_source_go_init( VipsSourceGo *source_go )
-{
-	printf( "GO CLASSSS initt:\n" );
-    fflush(stdout);
-}
-
-G_DEFINE_TYPE( VipsSourceGo, vips_source_go, VIPS_TYPE_SOURCE );
-
-VipsSourceGo * vips_source_go_new ( int id )
-{
-	VipsSourceGo *source_go;
-
-	printf ( "vips_source_go_new: %d \n", id );
-	fflush(stdout);
-
-	source_go = VIPS_SOURCE_GO( g_object_new( VIPS_TYPE_SOURCE_GO, NULL ) );
-	source_go->id = id;
-
-	if( vips_object_build( VIPS_OBJECT( source_go ) ) ) {
-		VIPS_UNREF( source_go );
-		return( NULL );
-	}
-
-	return( source_go );
+	return source_custom;
 }
 */
 import "C"
@@ -116,6 +44,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"unsafe"
 )
 
 var (
@@ -125,9 +54,10 @@ var (
 )
 
 type Source struct {
-	reader  io.Reader
-	seeker  io.Seeker
-	vipsObj *C.struct__VipsSourceGo
+	reader io.Reader
+	seeker io.Seeker
+	src    *C.struct__VipsSourceCustom
+	args   *C.struct__GoSourceArguments
 }
 
 func NewSource(image io.Reader) (*Source, error) {
@@ -146,16 +76,21 @@ func NewSource(image io.Reader) (*Source, error) {
 	sources[id] = src
 	sourceMu.Unlock()
 
-	src.vipsObj = C.vips_source_go_new(C.int(id))
-
-	fmt.Println(C.GoStringN(src.vipsObj.parent_object.parent_object.parent_object.description, 100))
+	fmt.Printf("New Source ID: %d\n", id)
+	src.args = C.create_go_source_arguments(C.int(id))
+	src.src = C.create_go_custom_source(src.args)
 
 	return src, nil
 }
 
+func (s *Source) Cleanup() {
+	C.free(unsafe.Pointer(s.args))
+	//C.free(unsafe.Pointer(s.src))
+}
+
 // TODO: Change into *Target later on
 func (s *Source) Thumbnail() (thumbnail []byte, err error) {
-	img, err := vipsThumbnail(s, 50, 50, false, true)
+	img, err := vipsThumbnail(s, 50, 50, true, true)
 	if err != nil {
 		return nil, fmt.Errorf("error generating thumbnail: %w", err)
 	}
