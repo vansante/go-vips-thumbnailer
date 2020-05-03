@@ -5,16 +5,17 @@ package thumbnailer
 #include "vips.h"
 
 int vips_thumbnail_bridge(VipsSourceGo *source, VipsImage **out, int width, int height, int no_rotate, int crop) {
+	printf( "BRIDGE:\n" );
+    fflush(stdout);
 	if (crop) {
-		return vips_thumbnail_source(&source->parent_object, out, width,
-		//return vips_thumbnail_source(&source, out, width,
+		return vips_thumbnail_source(source, out, width,
 			"height", height,
 			"no_rotate", INT_TO_GBOOLEAN(no_rotate),
 			"crop", VIPS_INTERESTING_CENTRE,
 			NULL
 		);
 	}
-	return vips_thumbnail_source(&source->parent_object, out, width,
+	return vips_thumbnail_source(source, out, width,
 		"height", height,
 		"no_rotate", INT_TO_GBOOLEAN(no_rotate),
 		NULL

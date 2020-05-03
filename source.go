@@ -3,8 +3,6 @@ package thumbnailer
 /*
 #include "vips.h"
 
-G_DEFINE_TYPE( VipsSourceGo, vips_source_go, VIPS_TYPE_SOURCE );
-
 VipsSourceGo * vips_source_go_new ( int id )
 {
 	VipsSourceGo *source_go;
@@ -22,6 +20,8 @@ VipsSourceGo * vips_source_go_new ( int id )
 
 	return( source_go );
 }
+
+G_DEFINE_TYPE( VipsSourceGo, vips_source_go, VIPS_TYPE_SOURCE );
 
 static gint64
 vips_source_go_read_real ( VipsSource *source, void *buffer, size_t length )
@@ -59,7 +59,7 @@ vips_source_go_seek_go ( VipsSourceGo *source, gint64 offset, int whence )
 }
 
 static void
-vips_source_go_class_init( VipsSourceGoClass *class )
+vips_source_go_class_init ( VipsSourceGoClass *class )
 {
     printf( "GO CLASSSS :\n" );
     fflush(stdout);
@@ -79,6 +79,8 @@ vips_source_go_class_init( VipsSourceGoClass *class )
 static void
 vips_source_go_init( VipsSourceGo *source_go )
 {
+	printf( "GO CLASSSS initt:\n" );
+    fflush(stdout);
 }
 */
 import "C"
