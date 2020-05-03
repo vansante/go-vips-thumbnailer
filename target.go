@@ -19,13 +19,13 @@ GoTargetArguments * create_go_target_arguments( int image_id )
 static gint64
 go_write ( VipsTargetCustom *target_custom, const void *data, gint64 length, GoTargetArguments * target_args )
 {
-	return GoTargetWrite ( target_args->image_id );
+	return goTargetWrite ( target_args->image_id );
 }
 
 static void
 go_finish ( VipsTargetCustom *target_custom, GoTargetArguments * target_args )
 {
-	GoTargetFinish ( target_args->image_id );
+	goTargetFinish ( target_args->image_id );
 }
 
 VipsTargetCustom *
@@ -54,6 +54,7 @@ var (
 )
 
 type Target struct {
+	id          int
 	writer      io.Writer
 	target      *C.struct__VipsTargetCustom
 	args        *C.struct__GoTargetArguments
@@ -67,18 +68,39 @@ func NewTarget(writer io.Writer) *Target {
 
 	targetMu.Lock()
 	targetCtr++
-	id := targetCtr
-	targets[id] = target
+	target.id = targetCtr
+	targets[target.id] = target
 	targetMu.Unlock()
 
-	fmt.Printf("New Target ID: %d\n", id)
-	target.args = C.create_go_target_arguments(C.int(id))
+	fmt.Printf("New Target ID: %d\n", target.id)
+	target.args = C.create_go_target_arguments(C.int(target.id))
 	target.target = C.create_go_custom_target(target.args)
 
 	return target
 }
 
-func (t *Target) Cleanup() {
+func (t *Target) finish() {
+	targetMu.Lock()
+	delete(targets, t.id)
+	targetMu.Unlock()
+
+	fmt.Printf("goTargetFinish: Closing [id %d]\n", t.id)
+
+	t.free()
+
+	if !t.CloseWriter {
+		return
+	}
+	closer, ok := t.writer.(io.Closer)
+	if ok {
+		err := closer.Close()
+		if err != nil {
+			fmt.Printf("goTargetFinish: Error closing [id %d]: %v", t.id, err)
+		}
+	}
+}
+
+func (t *Target) free() {
 	C.free(unsafe.Pointer(t.args))
 	//C.free(unsafe.Pointer(s.target))
 }

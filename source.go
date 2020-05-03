@@ -19,13 +19,13 @@ GoSourceArguments * create_go_source_arguments( int image_id )
 static gint64
 go_read ( VipsSourceCustom *source_custom, void *buffer, gint64 length, GoSourceArguments * source_args )
 {
-    return GoSourceRead(source_args->image_id, buffer, length);
+    return goSourceRead(source_args->image_id, buffer, length);
 }
 
 static gint64
 go_seek ( VipsSourceCustom *source_custom, gint64 offset, int whence, GoSourceArguments * source_args )
 {
-	return GoSourceSeek(source_args->image_id, offset, whence);
+	return goSourceSeek(source_args->image_id, offset, whence);
 }
 
 VipsSourceCustom *
@@ -83,12 +83,6 @@ func NewSource(image io.Reader) *Source {
 	return src
 }
 
-func (s *Source) Cleanup() {
-	C.free(unsafe.Pointer(s.args))
-	//C.free(unsafe.Pointer(s.target))
-}
-
-// TODO: Change into *Target later on
 func (s *Source) Thumbnail(target *Target) (err error) {
 	img, err := vipsThumbnail(s, 50, 50, true, true)
 	if err != nil {
@@ -100,4 +94,9 @@ func (s *Source) Thumbnail(target *Target) (err error) {
 		return fmt.Errorf("error saving thumbnail: %w", err)
 	}
 	return nil
+}
+
+func (s *Source) free() {
+	C.free(unsafe.Pointer(s.args))
+	//C.free(unsafe.Pointer(s.target))
 }
