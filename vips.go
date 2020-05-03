@@ -110,9 +110,9 @@ func vipsThumbnail(imageSource *Source, width, height int, noAutoRotate, crop bo
 
 func vipsSave(image *C.VipsImage, target *C.VipsTargetCustom, options SaveOptions) error {
 	saveErr := C.int(0)
-	interlace := C.int(0)
-	quality := C.int(70)
-	strip := C.int(1)
+	interlace := C.int(options.Interlace)
+	quality := C.int(options.Quality)
+	strip := C.int(options.StripMetadata)
 
 	saveErr = C.vips_jpegsave_bridge(image, target, strip, quality, interlace)
 
