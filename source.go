@@ -3,11 +3,14 @@ package thumbnailer
 /*
 #include "vips.h"
 
+G_DEFINE_TYPE( VipsSourceGo, vips_source_go, VIPS_TYPE_SOURCE );
+
 VipsSourceGo * vips_source_go_new ( int id )
 {
 	VipsSourceGo *source_go;
 
-	VIPS_DEBUG_MSG( "vips_source_go_new:\n" );
+	printf ( "vips_source_go_new: %d \n", id );
+	fflush(stdout);
 
 	source_go = VIPS_SOURCE_GO( g_object_new( VIPS_TYPE_SOURCE_GO, NULL ) );
 	source_go->id = id;
@@ -19,9 +22,68 @@ VipsSourceGo * vips_source_go_new ( int id )
 
 	return( source_go );
 }
+
+static gint64
+vips_source_go_read_real ( VipsSource *source, void *buffer, size_t length )
+{
+    printf( "GO TEST READ :\n" );
+    fflush(stdout);
+    return 0;
+//    return GoSourceRead(1, buffer, length);
+}
+
+static gint64
+vips_source_go_seek_real ( VipsSource *source, gint64 offset, int whence )
+{
+    printf( "GO TEST SEEK :\n" );
+    fflush(stdout);
+    return 0;
+}
+
+static gint64
+vips_source_go_read_go ( VipsSourceGo *source, void *buffer, gint64 length )
+{
+    printf( "GO TEST READ 2:\n" );
+    fflush(stdout);
+    return 0;
+//    return GoSourceRead(source->id, buffer, length);
+}
+
+static gint64
+vips_source_go_seek_go ( VipsSourceGo *source, gint64 offset, int whence )
+{
+    printf( "GO TEST SEEK 2:\n" );
+    fflush(stdout);
+    return 0;
+//	return GoSourceSeek(source->id, offset, whence);
+}
+
+static void
+vips_source_go_class_init( VipsSourceGoClass *class )
+{
+    printf( "GO CLASSSS :\n" );
+    fflush(stdout);
+	VipsObjectClass *object_class = VIPS_OBJECT_CLASS( class );
+	VipsSourceClass *source_class = VIPS_SOURCE_CLASS( class );
+
+	object_class->nickname = "go source";
+	object_class->description = _( "Go source" );
+
+	class->read = vips_source_go_read_go;
+    class->seek = vips_source_go_seek_go;
+
+    source_class->read = vips_source_go_read_real;
+    source_class->seek = vips_source_go_seek_real;
+}
+
+static void
+vips_source_go_init( VipsSourceGo *source_go )
+{
+}
 */
 import "C"
 import (
+	"fmt"
 	"io"
 	"sync"
 )
@@ -57,4 +119,18 @@ func NewSource(image io.Reader) (*Source, error) {
 	src.vipsObj = C.vips_source_go_new(C.int(id))
 
 	return src, nil
+}
+
+// TODO: Change into *Target later on
+func (s *Source) Thumbnail() (thumbnail []byte, err error) {
+	img, err := vipsThumbnail(s, 50, 50, false, true)
+	if err != nil {
+		return nil, fmt.Errorf("error generating thumbnail: %w", err)
+	}
+
+	thumbnail, err = vipsSave(img)
+	if err != nil {
+		return nil, fmt.Errorf("error saving thumbnail: %w", err)
+	}
+	return thumbnail, nil
 }

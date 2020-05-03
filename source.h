@@ -55,39 +55,4 @@ typedef struct _VipsSourceGoClass {
 
 } VipsSourceGoClass;
 
-
-static gint64
-vips_source_go_read_real ( VipsSourceGo *source, void *buffer, gint64 length )
-{
-    return GoSourceRead(source->id, buffer, length);
-}
-
-static gint64
-vips_source_go_seek_real ( VipsSourceGo *source, gint64 offset, int whence )
-{
-	return GoSourceSeek(source->id, offset, whence);
-}
-
-static void
-vips_source_go_class_init( VipsSourceGoClass *class )
-{
-	VipsObjectClass *object_class = VIPS_OBJECT_CLASS( class );
-	VipsSourceClass *source_class = VIPS_SOURCE_CLASS( class );
-
-	object_class->nickname = "go source";
-	object_class->description = _( "Go source" );
-
-	class->read = vips_source_go_read_real;
-    class->seek = vips_source_go_seek_real;
-}
-
-static void
-vips_source_go_init( VipsSourceGo *source_go )
-{
-}
-
-// WHY DO YOU ERROR
-//G_DEFINE_TYPE( VipsSourceGo, vips_source_go, VIPS_TYPE_SOURCE );
-
-
 #endif // HAVE_GO_SOURCE_H

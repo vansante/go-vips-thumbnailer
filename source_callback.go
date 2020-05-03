@@ -12,8 +12,12 @@ import (
 //export GoSourceRead
 func GoSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int) {
 	sourceMu.RLock()
-	src := sources[imageID]
+	src, ok := sources[imageID]
 	sourceMu.RUnlock()
+	if !ok {
+		fmt.Printf("GoSourceRead: Image [%d] not found \n", imageID)
+		return C.int(-1)
+	}
 
 	buf := C.GoBytes(buffer, bufSize)
 
@@ -23,7 +27,7 @@ func GoSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int
 		return C.int(n)
 	} else if err != nil {
 		fmt.Printf("GoSourceRead: Error: %v [read %d]\n", err, n)
-		return C.int(n)
+		return C.int(-1)
 	}
 
 	fmt.Printf("GoSourceRead: OK [read %d]\n", n)
@@ -34,8 +38,12 @@ func GoSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int
 //export GoSourceSeek
 func GoSourceSeek(imageID int, offset int, whence int) (newOffset C.int) {
 	sourceMu.RLock()
-	src := sources[imageID]
+	src, ok := sources[imageID]
 	sourceMu.RUnlock()
+	if !ok {
+		fmt.Printf("GoSourceSeek: Image [%d] not found \n", imageID)
+		return C.int(-1)
+	}
 
 	if src.seeker == nil {
 		// Unsupported!
@@ -46,7 +54,7 @@ func GoSourceSeek(imageID int, offset int, whence int) (newOffset C.int) {
 	n, err := src.seeker.Seek(int64(offset), whence)
 	if err != nil {
 		fmt.Printf("GoSourceSeek: Error: %v [offset %d]\n", err, n)
-		return C.int(n) // FIXME: Perhaps return -1 here?
+		return C.int(-1) // FIXME: Perhaps return -1 here?
 	}
 
 	fmt.Printf("GoSourceSeek: OK [read %d]\n", n)
