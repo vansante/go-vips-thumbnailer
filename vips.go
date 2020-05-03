@@ -92,10 +92,10 @@ func ShutdownVips() {
 	}
 }
 
-func vipsThumbnail(imageSource *Source, width, height int, autoRotate, crop bool) (*C.VipsImage, error) {
+func vipsThumbnail(imageSource *Source, width, height int, noAutoRotate, crop bool) (*C.VipsImage, error) {
 	var image *C.VipsImage
 
-	noRotate := C.int(boolToInt(!autoRotate))
+	noRotate := C.int(boolToInt(noAutoRotate))
 	cropParam := C.int(boolToInt(crop))
 
 	err := C.vips_thumbnail_bridge(imageSource.src, &image,
@@ -108,7 +108,7 @@ func vipsThumbnail(imageSource *Source, width, height int, autoRotate, crop bool
 	return image, nil
 }
 
-func vipsSave(image *C.VipsImage, target *C.VipsTargetCustom) error {
+func vipsSave(image *C.VipsImage, target *C.VipsTargetCustom, options SaveOptions) error {
 	saveErr := C.int(0)
 	interlace := C.int(0)
 	quality := C.int(70)

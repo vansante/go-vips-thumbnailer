@@ -21,9 +21,22 @@ func TestNewSource(t *testing.T) {
 	assert.NoError(t, err)
 	defer outFile.Close()
 
-	target := NewTarget(outFile)
+	image, err := src.Thumbnail(ThumbnailOptions{
+		Width:             120,
+		Height:            120,
+		Crop:              true,
+		DisableAutoRotate: true,
+	})
+	assert.NoError(t, err)
 
-	err = src.Thumbnail(target)
+	target := NewTarget(outFile)
+	err = image.Save(target, SaveOptions{
+		Interlace:     false,
+		StripMetadata: true,
+		Lossless:      false,
+		Quality:       50,
+		Compression:   0,
+	})
 	assert.NoError(t, err)
 
 	//spew.Dump(target.target)

@@ -85,17 +85,16 @@ func NewSource(image io.Reader) *Source {
 	return src
 }
 
-func (s *Source) Thumbnail(target *Target) (err error) {
-	img, err := vipsThumbnail(s, 50, 50, true, true)
+func (s *Source) Thumbnail(options ThumbnailOptions) (*Image, error) {
+	img, err := vipsThumbnail(s, options.Width, options.Height, options.DisableAutoRotate, options.Crop)
 	if err != nil {
-		return fmt.Errorf("error generating thumbnail: %w", err)
+		return nil, fmt.Errorf("error generating thumbnail: %w", err)
 	}
+	s.free()
 
-	err = vipsSave(img, target.target)
-	if err != nil {
-		return fmt.Errorf("error saving thumbnail: %w", err)
-	}
-	return nil
+	return &Image{
+		img: img,
+	}, nil
 }
 
 func (s *Source) free() {
