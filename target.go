@@ -41,7 +41,6 @@ create_go_custom_target( GoTargetArguments * target_args )
 */
 import "C"
 import (
-	"fmt"
 	"io"
 	"sync"
 	"unsafe"
@@ -72,7 +71,6 @@ func NewTarget(writer io.Writer) *Target {
 	targets[target.id] = target
 	targetMu.Unlock()
 
-	fmt.Printf("New Target ID: %d\n", target.id)
 	target.args = C.create_go_target_arguments(C.int(target.id))
 	target.target = C.create_go_custom_target(target.args)
 
@@ -84,7 +82,7 @@ func (t *Target) finish() {
 	delete(targets, t.id)
 	targetMu.Unlock()
 
-	fmt.Printf("goTargetFinish: Closing [id %d]\n", t.id)
+	logger.Debugf("goTargetFinish[id %d]: Closing [closeWriter: %v]", t.id, t.CloseWriter)
 
 	t.free()
 
@@ -95,7 +93,7 @@ func (t *Target) finish() {
 	if ok {
 		err := closer.Close()
 		if err != nil {
-			fmt.Printf("goTargetFinish: Error closing [id %d]: %v", t.id, err)
+			logger.Errorf("goTargetFinish[id %d]: Error closing: %v", t.id, err)
 		}
 	}
 }

@@ -3,7 +3,6 @@ package thumbnailer
 import "C"
 import (
 	"errors"
-	"fmt"
 	"io"
 	"reflect"
 	"unsafe"
@@ -16,7 +15,7 @@ func goSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int
 	src, ok := sources[imageID]
 	sourceMu.RUnlock()
 	if !ok {
-		fmt.Printf("goSourceRead: Source [id %d] not found\n", imageID)
+		logger.Errorf("goSourceRead[id %d]: Source not found", imageID)
 		return -1
 	}
 
@@ -30,14 +29,14 @@ func goSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int
 
 	n, err := src.reader.Read(buf)
 	if errors.Is(err, io.EOF) {
-		fmt.Printf("goSourceRead: EOF [read %d]\n", n)
+		logger.Debugf("goSourceRead[id %d] EOF [read %d]", imageID, n)
 		return C.int(n)
 	} else if err != nil {
-		fmt.Printf("goSourceRead: Error: %v [read %d]\n", err, n)
+		logger.Errorf("goSourceRead[id %d]: Error: %v [read %d]", imageID, err, n)
 		return -1
 	}
 
-	fmt.Printf("goSourceRead: OK [read %d]\n", n)
+	logger.Debugf("goSourceRead[id %d]: OK [read %d]", imageID, n)
 	return C.int(n)
 }
 
@@ -48,30 +47,30 @@ func goSourceSeek(imageID int, offset int, whence int) (newOffset C.int) {
 	src, ok := sources[imageID]
 	sourceMu.RUnlock()
 	if !ok {
-		fmt.Printf("goSourceSeek: Source [id %d] not found\n", imageID)
+		logger.Errorf("goSourceSeek[id %d]: Source not found", imageID)
 		return -1
 	}
 
 	if src.seeker == nil {
 		// Unsupported!
-		fmt.Printf("goSourceSeek: Not supported\n")
+		logger.Debugf("goSourceSeek[id %d]: Not supported", imageID)
 		return -1
 	}
 
 	switch whence {
 	case io.SeekStart, io.SeekCurrent, io.SeekEnd:
 	default:
-		fmt.Printf("goSourceSeek: Invalid whence value [%d]\n", whence)
+		logger.Errorf("goSourceSeek[id %d]: Invalid whence value [%d]", imageID, whence)
 		return -1
 	}
 
 	n, err := src.seeker.Seek(int64(offset), whence)
 	if err != nil {
-		fmt.Printf("goSourceSeek: Error: %v [offset %d | whence %d]\n", err, n, whence)
+		logger.Errorf("goSourceSeek[id %d]: Error: %v [offset %d | whence %d]", imageID, err, n, whence)
 		return -1
 	}
 
-	fmt.Printf("goSourceSeek: OK [seek %d | whence %d]\n", n, whence)
+	logger.Debugf("goSourceSeek[id %d]: OK [seek %d | whence %d]", imageID, n, whence)
 
 	return C.int(n)
 }
@@ -83,7 +82,7 @@ func goTargetWrite(imageID int, buffer unsafe.Pointer, bufSize C.int) (written C
 	target, ok := targets[imageID]
 	targetMu.RUnlock()
 	if !ok {
-		fmt.Printf("goTargetWrite: Target [id %d] not found\n", imageID)
+		logger.Errorf("goTargetWrite[id %d]: Target not found", imageID)
 		return -1
 	}
 
@@ -97,11 +96,11 @@ func goTargetWrite(imageID int, buffer unsafe.Pointer, bufSize C.int) (written C
 
 	n, err := target.writer.Write(buf)
 	if err != nil {
-		fmt.Printf("goTargetWrite: Error: %v [wrote %d]\n", err, n)
+		logger.Errorf("goTargetWrite[id %d]: Error: %v [wrote %d]", imageID, err, n)
 		return C.int(n)
 	}
 
-	fmt.Printf("goTargetWrite: OK [wrote %d]\n", n)
+	logger.Debugf("goTargetWrite[id %d]: OK [wrote %d]", imageID, n)
 	return C.int(n)
 }
 
@@ -111,7 +110,7 @@ func goTargetFinish(imageID int) {
 	target, ok := targets[imageID]
 	targetMu.RUnlock()
 	if !ok {
-		fmt.Printf("goTargetFinish: Target [id %d] not found\n", imageID)
+		logger.Errorf("goTargetFinish[id %d]: Target not found", imageID)
 		return
 	}
 

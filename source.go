@@ -76,7 +76,6 @@ func NewSource(image io.Reader) *Source {
 	sources[id] = src
 	sourceMu.Unlock()
 
-	fmt.Printf("New Source ID: %d\n", id)
 	src.args = C.create_go_source_arguments(C.int(id))
 	src.src = C.create_go_custom_source(src.args)
 
