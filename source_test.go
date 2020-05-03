@@ -1,7 +1,6 @@
 package thumbnailer
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -9,19 +8,21 @@ import (
 )
 
 func TestNewSource(t *testing.T) {
-	testFile, err := os.Open("assets/test2.jpg")
+	testFile, err := os.Open("assets/test.jpg")
 	assert.NoError(t, err)
+	defer testFile.Close()
 
-	src, err := NewSource(testFile)
-	assert.NoError(t, err)
-	//src.seeker = nil
+	src := NewSource(testFile)
 	defer src.Cleanup()
 
-	data, err := src.Thumbnail()
+	outFile, err := os.Create("assets/output.jpg")
+	assert.NoError(t, err)
+	defer outFile.Close()
+
+	target := NewTarget(outFile)
+
+	err = src.Thumbnail(target)
 	assert.NoError(t, err)
 
-	err = ioutil.WriteFile("assets/test_thumbnail.jpg", data, os.ModePerm)
-	assert.NoError(t, err)
-
-	//spew.Dump(src.src)
+	//spew.Dump(target.target)
 }

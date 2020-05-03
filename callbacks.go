@@ -2,7 +2,6 @@ package thumbnailer
 
 import "C"
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -10,14 +9,14 @@ import (
 	"unsafe"
 )
 
-// TODO: Figure out how to pass and return int64 :')
 //export GoSourceRead
+// TODO: Figure out how to pass and return int64 :')
 func GoSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int) {
 	sourceMu.RLock()
 	src, ok := sources[imageID]
 	sourceMu.RUnlock()
 	if !ok {
-		fmt.Printf("GoSourceRead: Image [id %d] not found \n", imageID)
+		fmt.Printf("GoSourceRead: Source [id %d] not found\n", imageID)
 		return -1
 	}
 
@@ -38,24 +37,18 @@ func GoSourceRead(imageID int, buffer unsafe.Pointer, bufSize C.int) (read C.int
 		return -1
 	}
 
-	if bufSize > 32 {
-		fmt.Println(hex.Dump(buf[0:32]))
-	} else {
-		fmt.Println(hex.Dump(buf))
-	}
-
 	fmt.Printf("GoSourceRead: OK [read %d]\n", n)
 	return C.int(n)
 }
 
-// TODO: Figure out how to return int64 :')
 //export GoSourceSeek
+// TODO: Figure out how to return int64 :')
 func GoSourceSeek(imageID int, offset int, whence int) (newOffset C.int) {
 	sourceMu.RLock()
 	src, ok := sources[imageID]
 	sourceMu.RUnlock()
 	if !ok {
-		fmt.Printf("GoSourceSeek: Image [id %d] not found \n", imageID)
+		fmt.Printf("GoSourceSeek: Source [id %d] not found\n", imageID)
 		return -1
 	}
 
@@ -81,4 +74,64 @@ func GoSourceSeek(imageID int, offset int, whence int) (newOffset C.int) {
 	fmt.Printf("GoSourceSeek: OK [seek %d | whence %d]\n", n, whence)
 
 	return C.int(n)
+}
+
+//export GoTargetWrite
+// TODO: Figure out how to return int64 :')
+func GoTargetWrite(imageID int, buffer unsafe.Pointer, bufSize C.int) (written C.int) {
+	targetMu.RLock()
+	target, ok := targets[imageID]
+	targetMu.RUnlock()
+	if !ok {
+		fmt.Printf("GoTargetWrite: Target [id %d] not found\n", imageID)
+		return -1
+	}
+
+	// https://stackoverflow.com/questions/51187973/how-to-create-an-array-or-a-slice-from-an-array-unsafe-pointer-in-golang
+	sh := &reflect.SliceHeader{
+		Data: uintptr(buffer),
+		Len:  int(bufSize),
+		Cap:  int(bufSize),
+	}
+	buf := *(*[]byte)(unsafe.Pointer(sh))
+
+	n, err := target.writer.Write(buf)
+	if err != nil {
+		fmt.Printf("GoTargetWrite: Error: %v [wrote %d]\n", err, n)
+		return C.int(n)
+	}
+
+	fmt.Printf("GoTargetWrite: OK [wrote %d]\n", n)
+	return C.int(n)
+}
+
+//export GoTargetFinish
+func GoTargetFinish(imageID int) {
+	targetMu.RLock()
+	target, ok := targets[imageID]
+	targetMu.RUnlock()
+	if !ok {
+		fmt.Printf("GoTargetFinish: Target [id %d] not found\n", imageID)
+		return
+	}
+
+	targetMu.Lock()
+	delete(targets, imageID)
+	targetMu.Unlock()
+
+	fmt.Printf("GoTargetFinish: Closing [id %d]\n", imageID)
+
+	defer target.Cleanup()
+
+	if !target.CloseWriter {
+		return
+	}
+
+	closer, ok := target.writer.(io.Closer)
+	if ok {
+		err := closer.Close()
+		if err != nil {
+			fmt.Printf("GoTargetFinish: Error closing [id %d]: %v", imageID, err)
+		}
+	}
 }

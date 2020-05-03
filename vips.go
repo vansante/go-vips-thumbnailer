@@ -20,9 +20,8 @@ int vips_thumbnail_bridge(VipsSourceCustom *source, VipsImage **out, int width, 
 	);
 }
 
-// TODO: Change to a VipsTargetCustom later on
-int vips_jpegsave_bridge(VipsImage *in, void **buf, size_t *len, int strip, int quality, int interlace) {
-	return vips_jpegsave_buffer(in, buf, len,
+int vips_jpegsave_bridge(VipsImage *in, VipsTargetCustom *target, int strip, int quality, int interlace) {
+	return vips_jpegsave_target(in, target,
 		"strip", INT_TO_GBOOLEAN(strip),
 		"Q", quality,
 		"optimize_coding", TRUE,
@@ -38,7 +37,6 @@ import (
 	"os"
 	"runtime"
 	"sync"
-	"unsafe"
 )
 
 var (
@@ -94,7 +92,6 @@ func ShutdownVips() {
 	}
 }
 
-// TODO: Change into writing to a VipsTargetGo
 func vipsThumbnail(imageSource *Source, width, height int, autoRotate, crop bool) (*C.VipsImage, error) {
 	var image *C.VipsImage
 
@@ -111,27 +108,21 @@ func vipsThumbnail(imageSource *Source, width, height int, autoRotate, crop bool
 	return image, nil
 }
 
-func vipsSave(image *C.VipsImage) ([]byte, error) {
-	length := C.size_t(0)
+func vipsSave(image *C.VipsImage, target *C.VipsTargetCustom) error {
 	saveErr := C.int(0)
 	interlace := C.int(0)
 	quality := C.int(70)
 	strip := C.int(1)
 
-	var ptr unsafe.Pointer
-	saveErr = C.vips_jpegsave_bridge(image, &ptr, &length, strip, quality, interlace)
+	saveErr = C.vips_jpegsave_bridge(image, target, strip, quality, interlace)
 
 	if int(saveErr) != 0 {
-		return nil, vipsError()
+		return vipsError()
 	}
 
-	buf := C.GoBytes(ptr, C.int(length))
-
-	// Clean up
-	C.g_free(C.gpointer(ptr))
 	C.vips_error_clear()
 
-	return buf, nil
+	return nil
 }
 
 func vipsError() error {

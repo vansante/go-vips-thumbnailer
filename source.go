@@ -60,7 +60,7 @@ type Source struct {
 	args   *C.struct__GoSourceArguments
 }
 
-func NewSource(image io.Reader) (*Source, error) {
+func NewSource(image io.Reader) *Source {
 	src := &Source{
 		reader: image,
 	}
@@ -80,24 +80,24 @@ func NewSource(image io.Reader) (*Source, error) {
 	src.args = C.create_go_source_arguments(C.int(id))
 	src.src = C.create_go_custom_source(src.args)
 
-	return src, nil
+	return src
 }
 
 func (s *Source) Cleanup() {
 	C.free(unsafe.Pointer(s.args))
-	//C.free(unsafe.Pointer(s.src))
+	//C.free(unsafe.Pointer(s.target))
 }
 
 // TODO: Change into *Target later on
-func (s *Source) Thumbnail() (thumbnail []byte, err error) {
+func (s *Source) Thumbnail(target *Target) (err error) {
 	img, err := vipsThumbnail(s, 50, 50, true, true)
 	if err != nil {
-		return nil, fmt.Errorf("error generating thumbnail: %w", err)
+		return fmt.Errorf("error generating thumbnail: %w", err)
 	}
 
-	thumbnail, err = vipsSave(img)
+	err = vipsSave(img, target.target)
 	if err != nil {
-		return nil, fmt.Errorf("error saving thumbnail: %w", err)
+		return fmt.Errorf("error saving thumbnail: %w", err)
 	}
-	return thumbnail, nil
+	return nil
 }
