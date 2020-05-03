@@ -3,6 +3,9 @@ package thumbnailer
 /*
 #include <vips/vips.h>
 
+long long goTargetWrite(int, const void *, long long);
+void goTargetFinish(int);
+
 typedef struct _GoTargetArguments {
 	int image_id;
 } GoTargetArguments;
@@ -19,7 +22,7 @@ GoTargetArguments * create_go_target_arguments( int image_id )
 static gint64
 go_write ( VipsTargetCustom *target_custom, const void *data, gint64 length, GoTargetArguments * target_args )
 {
-	return goTargetWrite ( target_args->image_id );
+	return goTargetWrite ( target_args->image_id, data, length );
 }
 
 static void

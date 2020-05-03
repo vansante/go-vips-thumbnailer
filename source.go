@@ -3,6 +3,9 @@ package thumbnailer
 /*
 #include <vips/vips.h>
 
+long long goSourceRead(int, void *, long long);
+long long goSourceSeek(int, long long, int);
+
 typedef struct _GoSourceArguments {
 	int image_id;
 } GoSourceArguments;
