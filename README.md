@@ -3,6 +3,9 @@
 This is a library for quickly and efficiently resizing images using libvips.
 This library exclusively uses the new streaming API introduced in libvips version 8.9.0.
 
+This package would not have been possible without the excellent work on libvips (https://github.com/libvips/libvips) 
+and the bimg library (https://github.com/h2non/bimg).
+
 ## Requirements
 
 - libvips 8.9+
