@@ -82,7 +82,7 @@ vips_source_go_class_init( VipsSourceGoClass *class )
 }
 
 static void
-vips_source_go_init( VipsSourceGo *source_custom )
+vips_source_go_init( VipsSourceGo *source_go )
 {
 }
 
