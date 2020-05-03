@@ -1,7 +1,7 @@
 package thumbnailer
 
 import (
-	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -22,5 +22,5 @@ func TestNewSource(t *testing.T) {
 	err = ioutil.WriteFile("assets/test_thumbnail.jpg", data, os.ModePerm)
 	assert.NoError(t, err)
 
-	fmt.Printf("%#v\n\n", src.vipsObj)
+	spew.Dump(src.vipsObj)
 }

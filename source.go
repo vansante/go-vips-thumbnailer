@@ -3,25 +3,32 @@ package thumbnailer
 /*
 #include "vips.h"
 
-VipsSourceGo * vips_source_go_new ( int id )
-{
-	VipsSourceGo *source_go;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-	printf ( "vips_source_go_new: %d \n", id );
-	fflush(stdout);
+#include <vips/vips.h>
+#include <vips/debug.h>
 
-	source_go = VIPS_SOURCE_GO( g_object_new( VIPS_TYPE_SOURCE_GO, NULL ) );
-	source_go->id = id;
-
-	if( vips_object_build( VIPS_OBJECT( source_go ) ) ) {
-		VIPS_UNREF( source_go );
-		return( NULL );
-	}
-
-	return( source_go );
-}
-
-G_DEFINE_TYPE( VipsSourceGo, vips_source_go, VIPS_TYPE_SOURCE );
+#define VIPS_TYPE_SOURCE_GO (vips_source_get_type())
+#define VIPS_SOURCE_GO( obj ) \
+(G_TYPE_CHECK_INSTANCE_CAST( (obj), \
+VIPS_TYPE_SOURCE_GO, VipsSourceGo ))
+#define VIPS_SOURCE_GO_CLASS( klass ) \
+(G_TYPE_CHECK_CLASS_CAST( (klass), \
+VIPS_TYPE_SOURCE_GO, VipsSourceGoClass))
+#define VIPS_IS_SOURCE_GO( obj ) \
+(G_TYPE_CHECK_INSTANCE_TYPE( (obj), VIPS_TYPE_SOURCE_GO ))
+#define VIPS_IS_SOURCE_GO_CLASS( klass ) \
+(G_TYPE_CHECK_CLASS_TYPE( (klass), VIPS_TYPE_SOURCE_GO ))
+#define VIPS_SOURCE_GO_GET_CLASS( obj ) \
+(G_TYPE_INSTANCE_GET_CLASS( (obj), \
+VIPS_TYPE_SOURCE_GO, VipsSourceGoClass ))
 
 static gint64
 vips_source_go_read_real ( VipsSource *source, void *buffer, size_t length )
@@ -63,11 +70,12 @@ vips_source_go_class_init ( VipsSourceGoClass *class )
 {
     printf( "GO CLASSSS :\n" );
     fflush(stdout);
+
 	VipsObjectClass *object_class = VIPS_OBJECT_CLASS( class );
 	VipsSourceClass *source_class = VIPS_SOURCE_CLASS( class );
 
 	object_class->nickname = "go source";
-	object_class->description = _( "Go source" );
+	object_class->description = "Go source";
 
 	class->read = vips_source_go_read_go;
     class->seek = vips_source_go_seek_go;
@@ -81,6 +89,26 @@ vips_source_go_init( VipsSourceGo *source_go )
 {
 	printf( "GO CLASSSS initt:\n" );
     fflush(stdout);
+}
+
+G_DEFINE_TYPE( VipsSourceGo, vips_source_go, VIPS_TYPE_SOURCE );
+
+VipsSourceGo * vips_source_go_new ( int id )
+{
+	VipsSourceGo *source_go;
+
+	printf ( "vips_source_go_new: %d \n", id );
+	fflush(stdout);
+
+	source_go = VIPS_SOURCE_GO( g_object_new( VIPS_TYPE_SOURCE_GO, NULL ) );
+	source_go->id = id;
+
+	if( vips_object_build( VIPS_OBJECT( source_go ) ) ) {
+		VIPS_UNREF( source_go );
+		return( NULL );
+	}
+
+	return( source_go );
 }
 */
 import "C"
@@ -119,6 +147,8 @@ func NewSource(image io.Reader) (*Source, error) {
 	sourceMu.Unlock()
 
 	src.vipsObj = C.vips_source_go_new(C.int(id))
+
+	fmt.Println(C.GoStringN(src.vipsObj.parent_object.parent_object.parent_object.description, 100))
 
 	return src, nil
 }
