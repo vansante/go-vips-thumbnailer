@@ -3,38 +3,11 @@ package thumbnailer
 /*
 #cgo pkg-config: vips
 #include "vips.h"
-
-int vips_thumbnail_bridge(VipsSourceCustom *source, VipsImage **out, int width, int height, int no_rotate, int crop) {
-	if (crop) {
-		return vips_thumbnail_source( (VipsSource*) source, out, width,
-			"height", height,
-			"no_rotate", INT_TO_GBOOLEAN(no_rotate),
-			"crop", VIPS_INTERESTING_CENTRE,
-			NULL
-		);
-	}
-	return vips_thumbnail_source( (VipsSource*) source, out, width,
-		"height", height,
-		"no_rotate", INT_TO_GBOOLEAN(no_rotate),
-		NULL
-	);
-}
-
-int vips_jpegsave_bridge(VipsImage *in, VipsTargetCustom *target, int strip, int quality, int interlace) {
-	return vips_jpegsave_target(in, (VipsTarget*) target,
-		"strip", INT_TO_GBOOLEAN(strip),
-		"Q", quality,
-		"optimize_coding", TRUE,
-		"interlace", INT_TO_GBOOLEAN(interlace),
-		NULL
-	);
-}
 */
 import "C"
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"sync"
 )
@@ -70,12 +43,6 @@ func InitVips() {
 		panic(fmt.Sprintf("unable to start vips [error code: %d]", err))
 	}
 
-	// Define a custom thread concurrency limit in libvips (this may generate thread-unsafe issues)
-	// See: https://github.com/jcupitt/libvips/issues/261#issuecomment-92850414
-	if os.Getenv("VIPS_CONCURRENCY") == "" {
-		C.vips_concurrency_set(1)
-	}
-
 	vipsInitialized = true
 }
 
@@ -90,6 +57,10 @@ func ShutdownVips() {
 		C.vips_shutdown()
 		vipsInitialized = false
 	}
+}
+
+func vipsImageLoad(imageSource *Source) *C.VipsImage {
+	return C.vips_new_image_bridge(imageSource.src)
 }
 
 func vipsThumbnail(imageSource *Source, width, height int, noAutoRotate, crop bool) (*C.VipsImage, error) {
@@ -110,9 +81,9 @@ func vipsThumbnail(imageSource *Source, width, height int, noAutoRotate, crop bo
 
 func vipsSave(image *C.VipsImage, target *C.VipsTargetCustom, options SaveOptions) error {
 	saveErr := C.int(0)
-	interlace := C.int(options.Interlace)
+	interlace := C.int(boolToInt(options.Interlace))
 	quality := C.int(options.Quality)
-	strip := C.int(options.StripMetadata)
+	strip := C.int(boolToInt(options.StripMetadata))
 
 	saveErr = C.vips_jpegsave_bridge(image, target, strip, quality, interlace)
 

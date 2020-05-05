@@ -19,20 +19,17 @@ GoTargetArguments * create_go_target_arguments( int image_id )
 	return target_args;
 }
 
-static gint64
-go_write ( VipsTargetCustom *target_custom, const void *data, gint64 length, GoTargetArguments * target_args )
+static gint64 go_write ( VipsTargetCustom *target_custom, const void *data, gint64 length, GoTargetArguments * target_args )
 {
 	return goTargetWrite ( target_args->image_id, data, length );
 }
 
-static void
-go_finish ( VipsTargetCustom *target_custom, GoTargetArguments * target_args )
+static void go_finish ( VipsTargetCustom *target_custom, GoTargetArguments * target_args )
 {
 	goTargetFinish ( target_args->image_id );
 }
 
-VipsTargetCustom *
-create_go_custom_target( GoTargetArguments * target_args )
+VipsTargetCustom * create_go_custom_target( GoTargetArguments * target_args )
 {
 	VipsTargetCustom * target_custom = vips_target_custom_new();
 

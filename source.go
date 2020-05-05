@@ -19,20 +19,17 @@ GoSourceArguments * create_go_source_arguments( int image_id )
 	return source_args;
 }
 
-static gint64
-go_read ( VipsSourceCustom *source_custom, void *buffer, gint64 length, GoSourceArguments * source_args )
+static gint64 go_read ( VipsSourceCustom *source_custom, void *buffer, gint64 length, GoSourceArguments * source_args )
 {
     return goSourceRead(source_args->image_id, buffer, length);
 }
 
-static gint64
-go_seek ( VipsSourceCustom *source_custom, gint64 offset, int whence, GoSourceArguments * source_args )
+static gint64 go_seek ( VipsSourceCustom *source_custom, gint64 offset, int whence, GoSourceArguments * source_args )
 {
 	return goSourceSeek(source_args->image_id, offset, whence);
 }
 
-VipsSourceCustom *
-create_go_custom_source( GoSourceArguments * source_args )
+VipsSourceCustom * create_go_custom_source( GoSourceArguments * source_args )
 {
 	VipsSourceCustom * source_custom = vips_source_custom_new();
 
@@ -85,6 +82,18 @@ func NewSource(image io.Reader) *Source {
 	return src
 }
 
+// Image loads the Source image verbatim
+func (s *Source) Image() (*Image, error) {
+	img := vipsImageLoad(s)
+	if img == nil {
+		return nil, fmt.Errorf("could not create image from source")
+	}
+	return &Image{
+		img: img,
+	}, nil
+}
+
+// Thumbnail creates a thumbnail of the Source with the given options
 func (s *Source) Thumbnail(options ThumbnailOptions) (*Image, error) {
 	img, err := vipsThumbnail(s, options.Width, options.Height, options.DisableAutoRotate, options.Crop)
 	if err != nil {

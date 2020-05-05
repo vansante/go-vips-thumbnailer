@@ -1,5 +1,8 @@
 package thumbnailer
 
+/*
+
+ */
 import "C"
 import (
 	"fmt"
